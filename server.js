@@ -2,6 +2,8 @@ const express = require("express");
 const fs = require("fs");
 const path = require("path");
 
+const Notelist = require("./lib/Notelist");
+
 const PORT = process.env.PORT || 3000;
 
 const app = express();
@@ -13,57 +15,8 @@ app.use(express.json());
 
 const DB_DIR = path.join(process.cwd(), "db/db.json");
 
-const loadData = () => {
-    return new Promise((res, rej) => {
-        try{
-            fs.readFile(DB_DIR, "utf-8", (err, data) => {
-                if(err) throw err;
-    
-                res(JSON.parse(data));
-    
-            })
-        } catch(err) {
-            rej(err)
-        }
-    })
-}
+const notes = new Notelist(DB_DIR);
 
-const saveData = (data) => {
-    return new Promise((res, rej) => {
-        try{
-
-            const dataString = JSON.stringify(data);
-
-            fs.writeFile(DB_DIR, dataString, "utf-8", (err) => {
-                if(err) throw err;
-                res();
-            })
-        } catch(err){
-            rej(err)
-        }
-    })
-}
-
-const deleteNote = (id) => {
-    return new Promise(async (res, rej) => {
-        try{
-            const savedData = await loadData();
-        
-            for(note of savedData){
-                if(note.id == id){
-                    note.deleted = true;
-                };
-            }
-
-            saveData(savedData);
-
-            res("Success");
-
-        } catch(err){
-            rej(err)
-        }
-    });
-}
 
 app.listen(PORT, (err) => {
     if(err) return console.log(err);
@@ -77,45 +30,22 @@ app.get("/notes", (req, res) => {
 });
 
 app.get("/api/notes", async (req, res) => {
-    try {
-
-        const savedData = await loadData();
-
-        const nonDeletedData = savedData.filter(note => !note.deleted);
-    
-        res.json(nonDeletedData);
-    
+    try {    
+        res.json(notes.getNonDeletedNotes());
     } catch (err) {
         res.json({ error: err })
     }
 });
 
-app.post("/api/notes", async ({body: {title, text}}, res) => {
+app.post("/api/notes", async ({ body: { title, text } }, res) => {
     try {
         if (!title) throw "Empty title";
         if (!text) throw "Empty text";
 
-        loadedData = await loadData();
+        const newNote = await notes.createNote(title, text);
 
-        console.log(loadedData);
+        res.json(newNote);
 
-        newNote = {
-            title: title,
-            text: text,
-            id: loadedData.length+1,
-            deleted: false
-        };
-
-        newData = [...loadedData, newNote];
-        console.log(newData);
-
-        saveData(newData)
-        
-        res.json({
-            title: newNote.title,
-            text: newNote.text,
-            id: newNote.id
-        });
     } catch (err) {
         res.json({ error: err });
     }
@@ -123,8 +53,8 @@ app.post("/api/notes", async ({body: {title, text}}, res) => {
 
 app.delete("/api/notes/:id", async ({params: {id}}, res) => {
     try{
-        const message = await deleteNote(id);
-        res.json({msg: message});
+        const message = await notes.deleteNote(id);
+        res.json(message);
     } catch(err){
         res.json({error: err})
     }
