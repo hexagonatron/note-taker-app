@@ -44,18 +44,25 @@ const saveData = (data) => {
     })
 }
 
-const deleteNote = async (id) => {
-    return new Promise((res, rej) => {
-        const savedData = await loadData();
-    
-        newData = savedData.filter((note) => {
-            note.id != id
-        });
+const deleteNote = (id) => {
+    return new Promise(async (res, rej) => {
+        try{
+            const savedData = await loadData();
+        
+            for(note of savedData){
+                if(note.id == id){
+                    note.deleted = true;
+                };
+            }
 
-    })
+            saveData(savedData);
 
+            res("Success");
 
-
+        } catch(err){
+            rej(err)
+        }
+    });
 }
 
 app.listen(PORT, (err) => {
@@ -72,9 +79,11 @@ app.get("/notes", (req, res) => {
 app.get("/api/notes", async (req, res) => {
     try {
 
-        const notes = await loadData()
-            
-        res.json(notes);
+        const savedData = await loadData();
+
+        const nonDeletedData = savedData.filter(note => !note.deleted);
+    
+        res.json(nonDeletedData);
     
     } catch (err) {
         res.json({ error: err })
@@ -112,8 +121,11 @@ app.post("/api/notes", async ({body: {title, text}}, res) => {
     }
 });
 
-app.delete("/api/notes/:id", ({params: {id}}, res) => {
-    console.log(id);
-    const deletedNote = deleteNote(id);
-    res.json(deletedNote);
-})
+app.delete("/api/notes/:id", async ({params: {id}}, res) => {
+    try{
+        const message = await deleteNote(id);
+        res.json({msg: message});
+    } catch(err){
+        res.json({error: err})
+    }
+});
