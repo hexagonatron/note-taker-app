@@ -1,5 +1,4 @@
 const express = require("express");
-const fs = require("fs");
 const path = require("path");
 
 const Notelist = require("./lib/Notelist");
@@ -56,6 +55,6 @@ app.delete("/api/notes/:id", async ({params: {id}}, res) => {
         const message = await notes.deleteNote(id);
         res.json(message);
     } catch(err){
-        res.json({error: err})
+        res.json({error: err});
     }
 });
