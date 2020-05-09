@@ -1,4 +1,4 @@
-# [Note Taker](https%3A%2F%2Foop-note-taker.herokuapp.com%2F)
+# [Note Taker](https://oop-note-taker.herokuapp.com/)
 ![License](https://img.shields.io/badge/Licence-MIT-blue)
 
 An app that takes allows one to take notes and save them to a file for later display.
